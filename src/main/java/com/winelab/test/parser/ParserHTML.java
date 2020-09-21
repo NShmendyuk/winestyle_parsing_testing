@@ -7,18 +7,35 @@ import org.springframework.stereotype.Service;
 import org.jsoup.*;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 
 @Service
 public class ParserHTML {
     String mainUrl = "https://spb.winestyle.ru/wine/st-petersburg/";
+//    String mainUrl = "https://spb.winestyle.ru/wine/all/";
 
     public void winestyleParsing() throws IOException{
+        //TODO: надо ещё проверить на существование страниц - как будет работать если одна страница или не одной
+        // (а впрочем не надо, тут же делаем только для winestyle)
+        Integer pages = getNumberOfPages(mainUrl);
+
         parsing(mainUrl);
-        parsing(mainUrl + "?page=2");
+        for (int i = 2; i<=pages; i++){
+            parsing(mainUrl + "?page=" + i);
+        }
     }
 
-    public void parsing(String url) throws IOException {
+    private Integer getNumberOfPages(String url) throws IOException {
+        Document doc = Jsoup.connect(url)
+                .userAgent("Chrome/85.0.4183.102")
+                .get();
+        Element winePagesElement = doc.getElementById("CatalogPagingBottom");
+        String pages = winePagesElement.getElementsByTag("ul").text();
+        return Integer.parseInt(pages.substring(pages.lastIndexOf(" ")+1));
+    }
+
+    private void parsing(String url) throws IOException {
         Document doc = Jsoup.connect(url)
                 .userAgent("Chrome/85.0.4183.102")
                 .get();
@@ -51,7 +68,7 @@ public class ParserHTML {
 
     private void entryWineInfo(String wineInfo){
         String[] strings = wineInfo.split(":");
-        System.out.println(strings[0] + " - " + strings[1]);
+        System.out.println(strings[0] + " - " + strings[1]); // TODO: писать в log.info, или в БД
     }
 
 }
