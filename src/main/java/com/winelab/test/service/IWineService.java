@@ -3,9 +3,12 @@ package com.winelab.test.service;
 import com.winelab.test.dto.WineDto;
 import com.winelab.test.model.Wine;
 
+import java.io.IOException;
+import java.util.List;
+
 public interface IWineService {
     Wine add(WineDto wineDto);
-    Wine getWineById(Long id);
-    Wine getWineByName(Long id);
-    Wine getAllWine();
+    Wine getWineByName(String name);
+    List<Wine> getAllWines();
+    void toCsvFile() throws IOException;
 }

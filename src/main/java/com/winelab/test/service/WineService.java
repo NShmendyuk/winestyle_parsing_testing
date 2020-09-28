@@ -1,9 +1,16 @@
 package com.winelab.test.service;
 
+import com.opencsv.CSVWriter;
 import com.winelab.test.dto.WineDto;
 import com.winelab.test.model.Wine;
 import com.winelab.test.repository.WineRepository;
 import org.springframework.stereotype.Service;
+
+import java.io.FileWriter;
+import java.io.IOException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
 
 @Service
 public class WineService implements IWineService {
@@ -15,18 +22,13 @@ public class WineService implements IWineService {
     }
 
     @Override
-    public Wine getWineById(Long id){
-        return null;
+    public Wine getWineByName(String name){
+        return wineRepository.findByName(name);
     }
 
     @Override
-    public Wine getWineByName(Long id){
-        return null;
-    }
-
-    @Override
-    public Wine getAllWine(){
-        return null;
+    public List<Wine> getAllWines(){
+        return wineRepository.findAll();
     }
 
     @Override
@@ -43,5 +45,18 @@ public class WineService implements IWineService {
         wine.setGrape(wineDto.getGrape());
         wineRepository.save(wine);
         return wine;
+    }
+
+    @Override
+    public void toCsvFile() throws IOException {
+        String csv = "data.csv";
+        CSVWriter writer = new CSVWriter(new FileWriter(csv));
+        List<Wine> wines = getAllWines();
+        boolean includeHeaders = true;
+        try {
+            writer.writeAll((ResultSet) wines, includeHeaders); //writer is instance of CSVWriter
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }

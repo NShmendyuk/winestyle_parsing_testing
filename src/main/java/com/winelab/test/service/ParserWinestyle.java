@@ -33,6 +33,7 @@ public class ParserWinestyle{
         for (int i = 2; i<=pages; i++){
             parsing(mainUrl + winePages + "?page=" + i);
         }
+        iWineService.toCsvFile();
     }
 
 //    Здесь всё норм - просто пробегаем по страничкам интернет-магазина
@@ -62,7 +63,7 @@ public class ParserWinestyle{
                                 indexOf("<a href=\"")+9, urlToProductPage.indexOf("\">"));
                 parsePage(urlToProductPage);
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(250);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -76,10 +77,15 @@ public class ParserWinestyle{
         String price = "";
         String name = "";
         ArrayList<String> values;
+        Document doc;
+        try{
+            doc = Jsoup.connect(mainUrl + wineUrlPage)
+                    .userAgent("Chrome/85.0.4183.102")
+                    .get(); // Берем страничку html
 
-        Document doc = Jsoup.connect(mainUrl + wineUrlPage)
-                .userAgent("Chrome/85.0.4183.102")
-                .get(); // Берем страничку html
+        } catch (Exception ex){
+
+        }
 
         //Название
         Elements mainHeader = doc.getElementsByClass("main-header");
@@ -107,12 +113,11 @@ public class ParserWinestyle{
             price = parsePriceFromMainInfo(mainInfo);
         }
 
-        color = parseColorTastingInfo(colorTastingInfo);
+        color = parseColorTastingInfo(colorTastingInfo); //TODO: можно ли изменить строку так, чтобы остался только цвет
 
-        Wine wine = createWine(name, price, color, values);
+        createWine(name, price, color, values);
 
-        System.out.println(wine.getColor()); //TODO: можно ли изменить строку так, чтобы остался только цвет
-    }
+         }
 
     /**
      *
@@ -168,11 +173,10 @@ public class ParserWinestyle{
             Elements elements = el.getElementsByClass("description-block");
             for (Element description: elements){
                 if (description.text().contains("Цвет")){
-                    colorDescription = description.text().substring(5);
+                    colorDescription = description.text().replaceAll("Цвет", "");
                 }
             }
         }
-
         return colorDescription;
     }
 
@@ -184,6 +188,20 @@ public class ParserWinestyle{
         values.forEach(value -> {
             if (value.contains("Вино:")){
                 wineDto.setSugar( value.substring(value.indexOf(",")+2) );
+
+                if(value.contains("Розов")){
+                    wineDto.setColor("Розовое");
+                }
+                if(value.contains("Красн")){
+                    wineDto.setColor("Красное");
+                }
+                if(value.contains("Бел")){
+                    wineDto.setColor("Белое");
+                }
+                if(value.contains("Оранж")){
+                    wineDto.setColor("Оранжевое");
+                }
+
             }
             if (value.contains("Регион")){
                 wineDto.setRegion( value.substring(value.indexOf(":")+2) );
@@ -200,11 +218,19 @@ public class ParserWinestyle{
             }
             if (value.contains("Виноград")){
                 wineDto.setGrape( value.substring(value.indexOf(":")+2) );
+                if(value.contains("Бел")){
+                    wineDto.setColor("Белое");
+                }
             }
         });
         if (wineDto.getBrand() == null){
-            if (name.contains("\"")) wineDto.setBrand(name.substring(name.indexOf("\"")+1, name.lastIndexOf("\"")));
-            else wineDto.setBrand("noBrand");
+            try{
+                if (name.contains("\"")) wineDto.setBrand(name.substring(name.indexOf("\"")+1, name.lastIndexOf("\"")));
+                else wineDto.setBrand("noBrand");
+            } catch (Exception ex) {
+                System.out.println(name + "  !!!!!!Exception"); //TODO: log.error
+                wineDto.setBrand("noBrand");
+            }
         }
         return iWineService.add(wineDto);
     }
