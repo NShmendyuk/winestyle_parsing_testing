@@ -1,6 +1,7 @@
-package com.winelab.test.parser;
+package com.winelab.test.service;
 
-import com.winelab.test.entity.Wine;
+import com.winelab.test.dto.WineDto;
+import com.winelab.test.model.Wine;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -14,17 +15,23 @@ import java.util.ArrayList;
 
 @Service
 public class ParserWinestyle{
+    private IWineService iWineService;
+
     String mainUrl = "https://spb.winestyle.ru";
-//    String wineSpbPage = "/wine/st-petersburg/";
-    String wineSpbPage = "/wine/all/";
+//    String winePages = "/wine/st-petersburg/";
+    String winePages = "/wine/all/";
+
+    public ParserWinestyle(IWineService iWineService){
+        this.iWineService= iWineService;
+    }
 
     @Autowired
     public void winestyleParsingPages() throws IOException{
-        int pages = getNumberOfPages(mainUrl + wineSpbPage);
+        int pages = getNumberOfPages(mainUrl + winePages);
 
-        parsing(mainUrl + wineSpbPage);
+        parsing(mainUrl + winePages);
         for (int i = 2; i<=pages; i++){
-            parsing(mainUrl + wineSpbPage + "?page=" + i);
+            parsing(mainUrl + winePages + "?page=" + i);
         }
     }
 
@@ -88,6 +95,7 @@ public class ParserWinestyle{
         name = parseHeader(mainHeader);
         values = new ArrayList<>(parseMainInfo(mainInfo));
 
+        //TODO: Double.parseDouble(price)
         if (checkStock){
             price = parsePrice(rightInfo);
         } else {
@@ -98,7 +106,7 @@ public class ParserWinestyle{
 
         Wine wine = createWine(name, price, color, values);
 
-        System.out.println(wine.getColor());
+        System.out.println(wine.getColor()); //TODO: можно ли изменить строку так, чтобы остался только цвет
     }
 
     /**
@@ -164,35 +172,35 @@ public class ParserWinestyle{
     }
 
     private Wine createWine(String name, String price, String color, ArrayList<String> values){
-        Wine wine = new Wine();
-        wine.setName(name);
-        wine.setPrice(price);
-        wine.setColor(color);
+        WineDto wineDto = new WineDto();
+        wineDto.setName(name);
+        wineDto.setPrice(price);
+        wineDto.setColor(color);
         values.forEach(value -> {
             if (value.contains("Вино:")){
-                wine.setSugar( value.substring(value.indexOf(",")+2) );
+                wineDto.setSugar( value.substring(value.indexOf(",")+2) );
             }
             if (value.contains("Регион")){
-                wine.setRegion( value.substring(value.indexOf(":")+2) );
+                wineDto.setRegion( value.substring(value.indexOf(":")+2) );
             }
 //            if (value.contains("Производитель")){}
             if (value.contains("Бренд")){
-                wine.setBrand( value.substring(value.indexOf(":")+2) );
+                wineDto.setBrand( value.substring(value.indexOf(":")+2) );
             }
             if (value.contains("Крепость")){
-                wine.setStrength( value.substring(value.indexOf("Крепость")+9) );
+                wineDto.setStrength( value.substring(value.indexOf("Крепость")+9) );
             }
             if (value.contains("Объем")){
-                wine.setVolume( value.substring(value.indexOf(":")+2) );
+                wineDto.setVolume( value.substring(value.indexOf(":")+2) );
             }
             if (value.contains("Виноград")){
-                wine.setGrape( value.substring(value.indexOf(":")+2) );
+                wineDto.setGrape( value.substring(value.indexOf(":")+2) );
             }
         });
-        if (wine.getBrand() == null){
-            if (name.contains("\"")) wine.setBrand(name.substring(name.indexOf("\"")+1, name.lastIndexOf("\"")));
-            else wine.setBrand("noBrand");
+        if (wineDto.getBrand() == null){
+            if (name.contains("\"")) wineDto.setBrand(name.substring(name.indexOf("\"")+1, name.lastIndexOf("\"")));
+            else wineDto.setBrand("noBrand");
         }
-        return wine;
+        return iWineService.add(wineDto);
     }
 }
