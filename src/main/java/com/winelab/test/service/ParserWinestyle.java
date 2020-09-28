@@ -61,12 +61,17 @@ public class ParserWinestyle{
                         substring(urlToProductPage.
                                 indexOf("<a href=\"")+9, urlToProductPage.indexOf("\">"));
                 parsePage(urlToProductPage);
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
 
 
-    private void parsePage(String wineUrlPage) throws IOException {
+    public void parsePage(String wineUrlPage) throws IOException {
         String color = "";
         String price = "";
         String name = "";
