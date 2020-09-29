@@ -7,120 +7,65 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.jsoup.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
 
 @Service
-public class ParserWinestyle{
-    private IWineService iWineService;
+public class ParserService {
+    private final IWineService wineService;
+    private final IDocumentService documentService;
 
     String mainUrl = "https://spb.winestyle.ru";
-//    String winePages = "/wine/st-petersburg/";
+    //    String winePages = "/wine/st-petersburg/";
     String winePages = "/wine/wines_ll/";
 
-    public ParserWinestyle(IWineService iWineService){
-        this.iWineService= iWineService;
+    public ParserService(IWineService wineService, IDocumentService documentService) {
+        this.wineService = wineService;
+        this.documentService = documentService;
     }
 
+    //TODO: принимать любой относительный путь
+    //public void parseByPages(String relativeUrl)
+
+    // Пробегаем по страничкам интернет-магазина
     @Autowired
-    public void winestyleParsingPages() throws IOException, InterruptedException {
-        int pages = getNumberOfPages(mainUrl + winePages);
+    public void parseByPages() throws IOException, InterruptedException {
+        String relativeUrl = this.winePages;
+        Document parsePageDoc = documentService.getJsoupDocument(mainUrl + relativeUrl);
 
-        parsing(mainUrl + winePages); //TODO: i = 2
-        for (int i = 2; i<=pages; i++){
-//            System.out.println("Next page " + i); //TODO: log.info(page);
-            parsing(mainUrl + winePages + "?page=" + i);
-            Thread.sleep(100);
-        }
-        iWineService.toCsvFile();
-    }
+        Document productDoc;
 
-//    Здесь всё норм - просто пробегаем по страничкам интернет-магазина
-    private Integer getNumberOfPages(String url) throws IOException {
-        Document doc = null;
+        int pages = documentService.pagesNumber(parsePageDoc);
 
-        while(doc == null)
-            try{
-                doc = Jsoup.connect(url)
-                        .userAgent("Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36")
-                        .get(); // Берем страничку html
+        for (int i = 2; i <= pages; i++) {
+            //TODO: log.info(page);
+            Elements wineElements = parsePageDoc.getElementsByClass("item-block-content");
 
-            } catch (Exception ex){
-                System.out.println("not connected to pages!!!!!!"); //TODO: log.error(no connection)
-                try {
-                    Thread.sleep(6000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+            for (Element infoBlock : wineElements) {
+                Elements els = infoBlock.getElementsByClass("title");
+                for (Element el : els) {
+                    String urlToProductPage = el.getElementsByAttribute("href").toString();
+                    urlToProductPage = urlToProductPage.
+                            substring(urlToProductPage.
+                                    indexOf("<a href=\"") + 9, urlToProductPage.indexOf("\">"));
+                    productDoc = documentService.getJsoupDocument(mainUrl + urlToProductPage);
+                    parsePage(productDoc);
+                    Thread.sleep(2000);
                 }
-            }
-        Element winePagesElement = doc.getElementById("CatalogPagingBottom");
-        String pages = winePagesElement.getElementsByTag("ul").text();
-        return Integer.parseInt(pages.substring(pages.lastIndexOf(" ")+1));
-    }
+            } //Переход на страницу продукции
 
-    private void parsing(String url) throws IOException {
-        Document doc = null;
-
-        while(doc == null) {
-            try {
-                doc = Jsoup.connect(url)
-                        .userAgent("Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36")
-                        .get(); // Берем страничку html
-
-            } catch (Exception ex) {
-                System.out.println("not connected to pages!!!!!!"); //TODO: log.error(no connection)
-                try {
-                    Thread.sleep(6000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            } // Берем страничку html
-        }
-        Elements wineElements = doc.getElementsByClass("item-block-content");
-
-        //Переход на личную страницу продукции
-        for (Element infoBlock: wineElements) {
-            Elements els = infoBlock.getElementsByClass("title");
-            for (Element el: els){
-                String urlToProductPage = el.getElementsByAttribute("href").toString();
-                urlToProductPage = urlToProductPage.
-                        substring(urlToProductPage.
-                                indexOf("<a href=\"")+9, urlToProductPage.indexOf("\">"));
-                parsePage(urlToProductPage);
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
+            Thread.sleep(2000);
+            parsePageDoc = documentService.getJsoupDocument(mainUrl + relativeUrl + "?page=" + i);
         }
     }
 
-
-    public void parsePage(String wineUrlPage) throws IOException {
+    public void parsePage(Document doc) {
         String color = "noColor";
         String price = "noPrice";
         String name = "noName";
         ArrayList<String> values;
-        Document doc = null;
-
-        while(doc == null)
-        try{
-            doc = Jsoup.connect(mainUrl + wineUrlPage)
-                    .userAgent("Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36")
-                    .get(); // Берем страничку html
-
-        } catch (Exception ex){
-            System.out.println("not connected to wine page!!!!!!"); //TODO: log.error(no connection)
-            try {
-                Thread.sleep(6000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
 
         //Название
         Elements mainHeader = doc.getElementsByClass("main-header");
@@ -151,8 +96,7 @@ public class ParserWinestyle{
         color = parseColorTastingInfo(colorTastingInfo); //TODO: можно ли изменить строку так, чтобы остался только цвет
 
         createWine(name, price, color, values);
-
-         }
+    }
 
     /**
      *
@@ -218,7 +162,7 @@ public class ParserWinestyle{
     private Wine createWine(String name, String price, String colorDescription, ArrayList<String> values){
         WineDto wineDto = new WineDto();
         wineDto.setName(name);
-        wineDto.setPrice(price.replaceAll("руб", "").replaceAll(".",""));
+        wineDto.setPrice(price.replaceAll("руб", "").replaceAll("\\.", ""));
         wineDto.setColor(colorDescription);
         values.forEach(value -> {
 
@@ -270,6 +214,6 @@ public class ParserWinestyle{
                 wineDto.setBrand("noBrand");
             }
         }
-        return iWineService.add(wineDto);
+        return wineService.add(wineDto);
     }
 }

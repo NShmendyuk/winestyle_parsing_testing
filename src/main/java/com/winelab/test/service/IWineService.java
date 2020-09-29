@@ -2,14 +2,11 @@ package com.winelab.test.service;
 
 import com.winelab.test.dto.WineDto;
 import com.winelab.test.model.Wine;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.IOException;
 import java.util.List;
 
 public interface IWineService {
     Wine add(WineDto wineDto);
     Wine getWineByName(String name);
     List<Wine> getAllWines();
-    void toCsvFile() throws IOException;
 }
