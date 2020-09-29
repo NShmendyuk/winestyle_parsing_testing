@@ -19,38 +19,66 @@ public class ParserWinestyle{
 
     String mainUrl = "https://spb.winestyle.ru";
 //    String winePages = "/wine/st-petersburg/";
-    String winePages = "/wine/all/";
+    String winePages = "/wine/wines_ll/";
 
     public ParserWinestyle(IWineService iWineService){
         this.iWineService= iWineService;
     }
 
     @Autowired
-    public void winestyleParsingPages() throws IOException{
+    public void winestyleParsingPages() throws IOException, InterruptedException {
         int pages = getNumberOfPages(mainUrl + winePages);
 
-        parsing(mainUrl + winePages);
+        parsing(mainUrl + winePages); //TODO: i = 2
         for (int i = 2; i<=pages; i++){
+//            System.out.println("Next page " + i); //TODO: log.info(page);
             parsing(mainUrl + winePages + "?page=" + i);
+            Thread.sleep(100);
         }
         iWineService.toCsvFile();
     }
 
 //    Здесь всё норм - просто пробегаем по страничкам интернет-магазина
     private Integer getNumberOfPages(String url) throws IOException {
-        Document doc = Jsoup.connect(url)
-                .userAgent("Chrome/85.0.4183.102")
-                .get();
+        Document doc = null;
+
+        while(doc == null)
+            try{
+                doc = Jsoup.connect(url)
+                        .userAgent("Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36")
+                        .get(); // Берем страничку html
+
+            } catch (Exception ex){
+                System.out.println("not connected to pages!!!!!!"); //TODO: log.error(no connection)
+                try {
+                    Thread.sleep(6000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         Element winePagesElement = doc.getElementById("CatalogPagingBottom");
         String pages = winePagesElement.getElementsByTag("ul").text();
         return Integer.parseInt(pages.substring(pages.lastIndexOf(" ")+1));
     }
 
     private void parsing(String url) throws IOException {
-        Document doc = Jsoup.connect(url)
-                .userAgent("Chrome/85.0.4183.102")
-                .get(); // Берем страничку html
+        Document doc = null;
 
+        while(doc == null) {
+            try {
+                doc = Jsoup.connect(url)
+                        .userAgent("Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36")
+                        .get(); // Берем страничку html
+
+            } catch (Exception ex) {
+                System.out.println("not connected to pages!!!!!!"); //TODO: log.error(no connection)
+                try {
+                    Thread.sleep(6000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            } // Берем страничку html
+        }
         Elements wineElements = doc.getElementsByClass("item-block-content");
 
         //Переход на личную страницу продукции
@@ -63,7 +91,7 @@ public class ParserWinestyle{
                                 indexOf("<a href=\"")+9, urlToProductPage.indexOf("\">"));
                 parsePage(urlToProductPage);
                 try {
-                    Thread.sleep(250);
+                    Thread.sleep(500);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -73,18 +101,25 @@ public class ParserWinestyle{
 
 
     public void parsePage(String wineUrlPage) throws IOException {
-        String color = "";
-        String price = "";
-        String name = "";
+        String color = "noColor";
+        String price = "noPrice";
+        String name = "noName";
         ArrayList<String> values;
-        Document doc;
+        Document doc = null;
+
+        while(doc == null)
         try{
             doc = Jsoup.connect(mainUrl + wineUrlPage)
-                    .userAgent("Chrome/85.0.4183.102")
+                    .userAgent("Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36")
                     .get(); // Берем страничку html
 
         } catch (Exception ex){
-
+            System.out.println("not connected to wine page!!!!!!"); //TODO: log.error(no connection)
+            try {
+                Thread.sleep(6000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
         //Название
@@ -128,7 +163,7 @@ public class ParserWinestyle{
         String name = "noHeaderName";
         for (Element head: header){
             name = head.getElementsByClass("text").toString();
-            name = name.substring(name.indexOf("<span class=\"text\">")+19, name.lastIndexOf(","));
+            name = name.substring(name.indexOf("<span class=\"text\">")+19, name.lastIndexOf(",")); //TODO: имя вина
         }
         return name;
     }
@@ -180,47 +215,50 @@ public class ParserWinestyle{
         return colorDescription;
     }
 
-    private Wine createWine(String name, String price, String color, ArrayList<String> values){
+    private Wine createWine(String name, String price, String colorDescription, ArrayList<String> values){
         WineDto wineDto = new WineDto();
         wineDto.setName(name);
-        wineDto.setPrice(price);
-        wineDto.setColor(color);
+        wineDto.setPrice(price.replaceAll("руб", "").replaceAll(".",""));
+        wineDto.setColor(colorDescription);
         values.forEach(value -> {
+
+            if (value.contains("Регион")){
+                wineDto.setRegion(value.replaceAll("Регион", "").replaceAll(" ",""));
+            }
+//            if (value.contains("Производитель")){}
+            if (value.contains("Бренд")){
+                wineDto.setBrand( value.replaceAll("Бренд", "").replaceAll(" ",""));
+            }
+            if (value.contains("Крепость")){
+                wineDto.setStrength( value.replaceAll("Крепость", "").replaceAll(" ",""));
+            }
+            if (value.contains("Объем")){
+                wineDto.setVolume( value.replaceAll("Объем", "").replaceAll(" ",""));
+            }
+            if (value.contains("Виноград")){
+                wineDto.setGrape( value.replaceAll("Виноград", "").replaceAll(" ","") );
+                if(value.contains("Бел")){
+                    wineDto.setColor("Белое");
+                }
+            }
             if (value.contains("Вино:")){
                 wineDto.setSugar( value.substring(value.indexOf(",")+2) );
 
+                //TODO: всё перевести в lower case
+                if(value.contains("Бел"))
+                {
+                    wineDto.setColor("Белое");
+                }
+                if(value.contains("Оранж")){
+                    wineDto.setColor("Оранжевое");
+                }
                 if(value.contains("Розов")){
                     wineDto.setColor("Розовое");
                 }
                 if(value.contains("Красн")){
                     wineDto.setColor("Красное");
                 }
-                if(value.contains("Бел")){
-                    wineDto.setColor("Белое");
-                }
-                if(value.contains("Оранж")){
-                    wineDto.setColor("Оранжевое");
-                }
 
-            }
-            if (value.contains("Регион")){
-                wineDto.setRegion( value.substring(value.indexOf(":")+2) );
-            }
-//            if (value.contains("Производитель")){}
-            if (value.contains("Бренд")){
-                wineDto.setBrand( value.substring(value.indexOf(":")+2) );
-            }
-            if (value.contains("Крепость")){
-                wineDto.setStrength( value.substring(value.indexOf("Крепость")+9) );
-            }
-            if (value.contains("Объем")){
-                wineDto.setVolume( value.substring(value.indexOf(":")+2) );
-            }
-            if (value.contains("Виноград")){
-                wineDto.setGrape( value.substring(value.indexOf(":")+2) );
-                if(value.contains("Бел")){
-                    wineDto.setColor("Белое");
-                }
             }
         });
         if (wineDto.getBrand() == null){

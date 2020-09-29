@@ -2,6 +2,7 @@ package com.winelab.test.service;
 
 import com.winelab.test.dto.WineDto;
 import com.winelab.test.model.Wine;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
 import java.util.List;
