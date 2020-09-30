@@ -27,6 +27,11 @@ public class WineService implements IWineService {
     }
 
     @Override
+    public Wine getWineByUrl(String url){
+        return wineRepository.findByUrl(url);
+    }
+
+    @Override
     public Wine add(WineDto wineDto){
         Wine wine = new Wine();
         wine.setUrl(wineDto.getUrl());

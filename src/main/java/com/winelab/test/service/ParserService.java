@@ -51,7 +51,9 @@ public class ParserService {
                             substring(urlToProductPage.
                                     indexOf("<a href=\"") + 9, urlToProductPage.indexOf("\">"));
                     productDoc = documentService.getJsoupDocument(mainUrl + urlToProductPage);
-                    parsePage(productDoc, urlToProductPage);
+                    if (wineService.getWineByUrl(urlToProductPage) == null) parsePage(productDoc, urlToProductPage);
+                    else continue; //TODO: or log.info(page existed in database);
+//                  else System.out.println("Exist!!!");
                     Thread.sleep(2000);
                 }
             } //Переход на страницу продукции
@@ -199,7 +201,7 @@ public class ParserService {
                 wineDto.setYear(Long.parseLong((value.replaceAll("Год: ", ""))));
             }
             if (value.contains("Регион")){
-                if (value.contains(",")) value = value.substring(0,value.lastIndexOf(","));
+                if (value.contains(",")) value = value.substring(0,value.indexOf(","));
                 wineDto.setRegion(value.replaceAll("Регион:", "").replaceAll(" ",""));
             }
 //            if (value.contains("Производитель")){}
