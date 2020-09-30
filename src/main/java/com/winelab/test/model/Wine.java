@@ -12,6 +12,9 @@ public class Wine {
     private Long id;
 
     @Column
+    private String url;
+
+    @Column
     private String name;
 
     @Column
@@ -40,6 +43,8 @@ public class Wine {
 
     @Column
     private String grape;
+
+    @Column
 
     @Override
     public String toString(){

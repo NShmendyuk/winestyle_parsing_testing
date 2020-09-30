@@ -51,7 +51,7 @@ public class ParserService {
                             substring(urlToProductPage.
                                     indexOf("<a href=\"") + 9, urlToProductPage.indexOf("\">"));
                     productDoc = documentService.getJsoupDocument(mainUrl + urlToProductPage);
-                    parsePage(productDoc);
+                    parsePage(productDoc, urlToProductPage);
                     Thread.sleep(2000);
                 }
             } //Переход на страницу продукции
@@ -61,7 +61,7 @@ public class ParserService {
         }
     }
 
-    public void parsePage(Document doc) {
+    public void parsePage(Document doc, String urlToProductPage) {
         String price = "noPrice";
         String name = "noName";
         ArrayList<String> values;
@@ -93,7 +93,7 @@ public class ParserService {
         }
 
 
-        createWine(name, price, values);
+        createWine(name, price, values, urlToProductPage);
     }
 
     /**
@@ -161,9 +161,10 @@ public class ParserService {
         return colorDescription;
     }
 
-    private Wine createWine(String name, String price, ArrayList<String> values){
+    private Wine createWine(String name, String price, ArrayList<String> values, String urlToProductPage){
         WineDto wineDto = new WineDto();
         wineDto.setName(name);
+        wineDto.setUrl(urlToProductPage);
         wineDto.setPrice(price.replaceAll("руб", "").replaceAll("\\.", ""));
         values.forEach(value -> {
 

@@ -29,6 +29,7 @@ public class WineService implements IWineService {
     @Override
     public Wine add(WineDto wineDto){
         Wine wine = new Wine();
+        wine.setUrl(wineDto.getUrl());
         if (wineDto.getName() == null) {
             wine.setName("noName");
         } else
