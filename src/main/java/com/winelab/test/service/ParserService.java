@@ -72,6 +72,12 @@ public class ParserService {
         //вино, регион, производитель, бренд, крепость, объем, виноград
         Elements mainInfo = doc.getElementsByClass("main-info");
 
+        Element aImage = doc.select("a[itemprop=image]").first();
+        String urlImage = aImage.getElementsByAttribute("href").toString();
+        urlImage = urlImage.
+                substring(urlImage.
+                        indexOf("\" href=\"") + 8, urlImage.indexOf("\" title"));
+
         boolean checkStock = true;
         for (Element el: mainInfo){
             //Товар в наличии или нет, если нет, то price надо по-другому парсить (из main-info, а не right-info)
@@ -93,7 +99,7 @@ public class ParserService {
         }
 
 
-        createWine(name, price, values, urlToProductPage);
+        createWine(name, price, values, urlToProductPage, urlImage);
     }
 
     /**
@@ -161,11 +167,12 @@ public class ParserService {
         return colorDescription;
     }
 
-    private Wine createWine(String name, String price, ArrayList<String> values, String urlToProductPage){
+    private Wine createWine(String name, String price, ArrayList<String> values, String urlToProductPage, String urlImage){
         WineDto wineDto = new WineDto();
         wineDto.setName(name);
         wineDto.setUrl(urlToProductPage);
         wineDto.setPrice(price.replaceAll("руб", "").replaceAll("\\.", ""));
+        wineDto.setImageUrl(urlImage);
         values.forEach(value -> {
 
             if (value.contains("Год:")){

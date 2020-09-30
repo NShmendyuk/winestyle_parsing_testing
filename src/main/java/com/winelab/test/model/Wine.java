@@ -15,6 +15,9 @@ public class Wine {
     private String url;
 
     @Column
+    private String imageUrl;
+
+    @Column
     private String name;
 
     @Column
