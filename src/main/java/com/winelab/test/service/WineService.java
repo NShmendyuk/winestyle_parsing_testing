@@ -31,6 +31,7 @@ public class WineService implements IWineService {
         Wine wine = new Wine();
         wine.setUrl(wineDto.getUrl());
         wine.setImageUrl(wineDto.getImageUrl());
+        wine.setTastingNotes(wineDto.getTastingNotes());
         if (wineDto.getName() == null) {
             wine.setName("noName");
         } else

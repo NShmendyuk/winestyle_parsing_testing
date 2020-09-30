@@ -64,6 +64,8 @@ public class ParserService {
     public void parsePage(Document doc, String urlToProductPage) {
         String price = "noPrice";
         String name = "noName";
+        String urlImage = "noUrlImage";
+        String tastingNotes = "noTastingNotes";
         ArrayList<String> values;
 
         //Название
@@ -73,7 +75,7 @@ public class ParserService {
         Elements mainInfo = doc.getElementsByClass("main-info");
 
         Element aImage = doc.select("a[itemprop=image]").first();
-        String urlImage = aImage.getElementsByAttribute("href").toString();
+        urlImage = aImage.getElementsByAttribute("href").toString();
         urlImage = urlImage.
                 substring(urlImage.
                         indexOf("\" href=\"") + 8, urlImage.indexOf("\" title"));
@@ -86,7 +88,8 @@ public class ParserService {
         // цена
         Elements rightInfo = doc.getElementsByClass("right-info");
 
-        Elements colorTastingInfo = doc.getElementsByClass("item-content item-content_second item-content_no-js");
+        Elements tastingInfo = doc.getElementsByClass("item-content item-content_second item-content_no-js");
+        tastingNotes = parseTastingInfo(tastingInfo);
 
         name = parseHeader(mainHeader);
         values = new ArrayList<>(parseMainInfo(mainInfo));
@@ -99,7 +102,7 @@ public class ParserService {
         }
 
 
-        createWine(name, price, values, urlToProductPage, urlImage);
+        createWine(name, price, values, urlToProductPage, urlImage, tastingNotes);
     }
 
     /**
@@ -155,24 +158,39 @@ public class ParserService {
     }
 
     private String parseTastingInfo(Elements tastingInfo){ //TODO: tasting info
-        String colorDescription = "noColor";
+        String colorDescription = "noColorDescription";
+        String aromaDescription = "noAromaDescription";
+        String tasteDescription = "noTasteDescription";
+        String gastronomicDescription = "noGastronomicDescription";
+
         for (Element el: tastingInfo){
             Elements elements = el.getElementsByClass("description-block");
             for (Element description: elements){
                 if (description.text().contains("Цвет")){
-                    colorDescription = description.text().replaceAll("Цвет", "");
+                    colorDescription = description.text();
+                }
+                if (description.text().contains("Аромат")){
+                    aromaDescription = description.text();
+                }
+                if (description.text().contains("Вкус")){
+                    tasteDescription = description.text();
+                }
+                if (description.text().contains("Гастроном")){
+                    gastronomicDescription = description.text();
                 }
             }
         }
-        return colorDescription;
+        return colorDescription + " " + aromaDescription + " " + tasteDescription + " " + gastronomicDescription;
     }
 
-    private Wine createWine(String name, String price, ArrayList<String> values, String urlToProductPage, String urlImage){
+    private Wine createWine(String name, String price, ArrayList<String> values,
+                            String urlToProductPage, String urlImage, String tastingNotes){
         WineDto wineDto = new WineDto();
         wineDto.setName(name);
         wineDto.setUrl(urlToProductPage);
         wineDto.setPrice(price.replaceAll("руб", "").replaceAll("\\.", ""));
         wineDto.setImageUrl(urlImage);
+        wineDto.setTastingNotes(tastingNotes);
         values.forEach(value -> {
 
             if (value.contains("Год:")){

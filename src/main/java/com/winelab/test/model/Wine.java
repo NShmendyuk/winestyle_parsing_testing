@@ -48,6 +48,7 @@ public class Wine {
     private String grape;
 
     @Column
+    private String tastingNotes;
 
     @Override
     public String toString(){
