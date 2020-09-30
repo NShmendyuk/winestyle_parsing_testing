@@ -7,6 +7,7 @@ import java.io.Serializable;
 @Data
 public class WineDto implements Serializable {
     private String name;
+    private Long year;
     private String brand;
     private String color;
     private String region;

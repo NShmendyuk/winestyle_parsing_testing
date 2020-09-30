@@ -62,7 +62,6 @@ public class ParserService {
     }
 
     public void parsePage(Document doc) {
-        String color = "noColor";
         String price = "noPrice";
         String name = "noName";
         ArrayList<String> values;
@@ -93,9 +92,8 @@ public class ParserService {
             price = parsePriceFromMainInfo(mainInfo);
         }
 
-        color = parseColorTastingInfo(colorTastingInfo); //TODO: можно ли изменить строку так, чтобы остался только цвет
 
-        createWine(name, price, color, values);
+        createWine(name, price, values);
     }
 
     /**
@@ -142,11 +140,15 @@ public class ParserService {
                 if (li.text().length() == 0) continue;
                 arrInfo.add(li.text());
             }
+
+            Element meta = el.select("meta[itemprop=releaseDate]").first();
+            String year = meta.attr("content");
+            arrInfo.add("Год: " + year);
         }
         return arrInfo;
     }
 
-    private String parseColorTastingInfo(Elements tastingInfo){
+    private String parseTastingInfo(Elements tastingInfo){ //TODO: tasting info
         String colorDescription = "noColor";
         for (Element el: tastingInfo){
             Elements elements = el.getElementsByClass("description-block");
@@ -159,13 +161,15 @@ public class ParserService {
         return colorDescription;
     }
 
-    private Wine createWine(String name, String price, String colorDescription, ArrayList<String> values){
+    private Wine createWine(String name, String price, ArrayList<String> values){
         WineDto wineDto = new WineDto();
         wineDto.setName(name);
         wineDto.setPrice(price.replaceAll("руб", "").replaceAll("\\.", ""));
-        wineDto.setColor(colorDescription);
         values.forEach(value -> {
 
+            if (value.contains("Год:")){
+                wineDto.setYear(Long.parseLong((value.replaceAll("Год: ", ""))));
+            }
             if (value.contains("Регион")){
                 wineDto.setRegion(value.replaceAll("Регион", "").replaceAll(" ",""));
             }

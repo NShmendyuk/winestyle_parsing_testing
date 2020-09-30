@@ -15,6 +15,9 @@ public class Wine {
     private String name;
 
     @Column
+    private Long year;
+
+    @Column
     private String brand;
 
     @Column

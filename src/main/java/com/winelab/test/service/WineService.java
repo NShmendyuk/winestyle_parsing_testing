@@ -65,6 +65,10 @@ public class WineService implements IWineService {
             wine.setGrape("noGrape");
         } else
         wine.setGrape(wineDto.getGrape());
+        if (wineDto.getYear() == null){
+            wine.setYear(0L);
+        } else
+            wine.setYear(wineDto.getYear());
         try{
             wineRepository.save(wine);
         } catch(Exception ex){

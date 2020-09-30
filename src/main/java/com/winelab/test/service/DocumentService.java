@@ -16,6 +16,7 @@ public class DocumentService implements IDocumentService {
             try {
                 doc = Jsoup
                         .connect(url)
+                        .userAgent("Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36")
                         .get(); // Берем страничку html
 
             } catch (Exception ex) {
