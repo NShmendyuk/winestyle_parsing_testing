@@ -1,6 +1,7 @@
 package com.winelab.test.model;
 
 import lombok.Data;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 
@@ -47,7 +48,7 @@ public class Wine {
     @Column
     private String grape;
 
-    @Column
+    @Column(columnDefinition="text")
     private String tastingNotes;
 
     @Override
