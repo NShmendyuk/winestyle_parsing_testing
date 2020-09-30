@@ -186,6 +186,8 @@ public class ParserService {
     private Wine createWine(String name, String price, ArrayList<String> values,
                             String urlToProductPage, String urlImage, String tastingNotes){
         WineDto wineDto = new WineDto();
+        if (name.contains(","))
+            name = name.substring(0,name.lastIndexOf(","));
         wineDto.setName(name);
         wineDto.setUrl(urlToProductPage);
         wineDto.setPrice(price.replaceAll("руб", "").replaceAll("\\.", ""));
@@ -197,26 +199,27 @@ public class ParserService {
                 wineDto.setYear(Long.parseLong((value.replaceAll("Год: ", ""))));
             }
             if (value.contains("Регион")){
-                wineDto.setRegion(value.replaceAll("Регион", "").replaceAll(" ",""));
+                if (value.contains(",")) value = value.substring(0,value.lastIndexOf(","));
+                wineDto.setRegion(value.replaceAll("Регион:", "").replaceAll(" ",""));
             }
 //            if (value.contains("Производитель")){}
             if (value.contains("Бренд")){
-                wineDto.setBrand( value.replaceAll("Бренд", "").replaceAll(" ",""));
+                wineDto.setBrand(value.replaceAll("Бренд", "").replaceAll(" ",""));
             }
             if (value.contains("Крепость")){
-                wineDto.setStrength( value.replaceAll("Крепость", "").replaceAll(" ",""));
+                wineDto.setStrength(value.replaceAll("Крепость", "").replaceAll(" ",""));
             }
             if (value.contains("Объем")){
-                wineDto.setVolume( value.replaceAll("Объем", "").replaceAll(" ",""));
+                wineDto.setVolume(value.replaceAll("Объем:", "").replaceAll(" ",""));
             }
             if (value.contains("Виноград")){
-                wineDto.setGrape( value.replaceAll("Виноград", "").replaceAll(" ","") );
+                wineDto.setGrape(value.replaceAll("Виноград:", "").replaceAll(" ",""));
                 if(value.contains("Бел")){
                     wineDto.setColor("Белое");
                 }
             }
             if (value.contains("Вино:")){
-                wineDto.setSugar( value.substring(value.indexOf(",")+2) );
+                wineDto.setSugar(value.substring(value.indexOf(",")+2));
 
                 //TODO: всё перевести в lower case
                 if(value.contains("Бел"))
