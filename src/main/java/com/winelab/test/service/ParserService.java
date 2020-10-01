@@ -52,8 +52,7 @@ public class ParserService {
                                     indexOf("<a href=\"") + 9, urlToProductPage.indexOf("\">"));
                     productDoc = documentService.getJsoupDocument(mainUrl + urlToProductPage);
                     if (wineService.getWineByUrl(urlToProductPage) == null) parsePage(productDoc, urlToProductPage);
-                    else continue; //TODO: or log.info(page existed in database);
-//                  else System.out.println("Exist!!!");
+                    else parseUpdatePrice(infoBlock, urlToProductPage);
                     Thread.sleep(2000);
                 }
             } //Переход на страницу продукции
@@ -62,6 +61,16 @@ public class ParserService {
             parsePageDoc = documentService.getJsoupDocument(mainUrl + relativeUrl + "?page=" + i);
         }
     }
+
+    //обновление позиции
+    private void parseUpdatePrice(Element infoBlock, String url){
+        Elements elems = infoBlock.getElementsByClass("price");
+        String priceForUpdate = elems.text();
+        priceForUpdate = priceForUpdate.replaceAll("руб\\.", "").replaceAll(" ", "");
+        wineService.updatePrice(priceForUpdate, url);
+    }
+
+    //основной парсинг
 
     public void parsePage(Document doc, String urlToProductPage) {
         String price = "noPrice";

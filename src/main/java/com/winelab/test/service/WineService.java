@@ -17,6 +17,14 @@ public class WineService implements IWineService {
     }
 
     @Override
+    public Wine updatePrice(String price, String url){
+        Wine wine = getWineByUrl(url);
+        wine.setPrice(price);
+        return wineRepository.save(wine);
+    }
+
+
+    @Override
     public Wine getWineByName(String name){
         return wineRepository.findByName(name);
     }
