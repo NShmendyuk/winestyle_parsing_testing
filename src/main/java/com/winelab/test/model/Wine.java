@@ -50,9 +50,13 @@ public class Wine {
     @Column(columnDefinition="text")
     private String tastingNotes;
 
+    @Column
+    private String rating;
+
     @Override
     public String toString(){
-        return name + " "
+        return url + " "
+                + name + " "
                 + color + " "
                 + grape + " "
                 + brand + " "
@@ -60,6 +64,8 @@ public class Wine {
                 + volume + " "
                 + strength + " "
                 + sugar + " "
-                + price;
+                + price + " "
+                + rating + " "
+                + year;
     }
 }

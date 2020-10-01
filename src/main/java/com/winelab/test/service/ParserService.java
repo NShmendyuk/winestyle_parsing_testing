@@ -77,7 +77,6 @@ public class ParserService implements IParserService {
             } //Переход на страницу продукции
             parsePageDoc = documentService.getJsoupDocument(mainUrl + relativeUrl + "?page=" + i);
         }
-        this.iAmUsed = false;
     }
 
     private void parsePage(Document doc, String urlToProductPage) {
@@ -169,9 +168,18 @@ public class ParserService implements IParserService {
                 arrInfo.add(li.text());
             }
 
-            Element meta = el.select("meta[itemprop=releaseDate]").first();
-            String year = meta.attr("content");
+            Element metaYear = el.select("meta[itemprop=releaseDate]").first();
+            String year = metaYear.attr("content");
             arrInfo.add("Год: " + year);
+
+            try{
+                Element metaRatingValue = el.select("meta[itemprop=ratingValue]").first();
+                String ratingValue = metaRatingValue.attr("content");
+                arrInfo.add("Рейтинг: " + Double.parseDouble(ratingValue)/2.);
+            } catch(Exception ex){
+                log.error("couldn't parse rating by winestyle;");
+            }
+
         }
         return arrInfo;
     }
@@ -253,6 +261,9 @@ public class ParserService implements IParserService {
                 }
                 if(value.contains("Красн")){
                     wineDto.setColor("Красное");
+                }
+                if (value.contains("Рейтинг:")){
+                    wineDto.setRating(value.replaceAll("Рейтинг: ", ""));
                 }
 
             }
