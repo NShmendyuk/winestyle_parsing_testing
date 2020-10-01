@@ -3,15 +3,19 @@ package com.winelab.test.service;
 import com.winelab.test.controller.exception.ServiceIsBusyException;
 import com.winelab.test.dto.WineDto;
 import com.winelab.test.model.Wine;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 
 @Service
+@Slf4j
 public class ParserService implements IParserService {
     private final IWineService wineService;
     private final IDocumentService documentService;
@@ -65,7 +69,7 @@ public class ParserService implements IParserService {
                             substring(urlToProductPage.
                                     indexOf("<a href=\"") + 9, urlToProductPage.indexOf("\">"));
                     productDoc = documentService.getJsoupDocument(mainUrl + urlToProductPage);
-                    System.out.println(urlToProductPage);
+                    log.info("pasring page: ", urlToProductPage);
                     if (wineService.getWineByUrl(urlToProductPage) == null) {
                         parsePage(productDoc, urlToProductPage);
                     }
@@ -258,7 +262,7 @@ public class ParserService implements IParserService {
                 if (name.contains("\"")) wineDto.setBrand(name.substring(name.indexOf("\"")+1, name.lastIndexOf("\"")));
                 else wineDto.setBrand("noBrand");
             } catch (Exception ex) {
-                System.out.println(name + "  !!!!!!Exception"); //TODO: log.error
+                log.error("coundn't parse brand from name! set \"noBrand\"; name: {}", name);
                 wineDto.setBrand("noBrand");
             }
         }
