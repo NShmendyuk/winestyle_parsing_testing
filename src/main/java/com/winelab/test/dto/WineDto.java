@@ -19,4 +19,5 @@ public class WineDto implements Serializable {
     private String price;
     private String grape;
     private String tastingNotes;
+    private String rating;
 }

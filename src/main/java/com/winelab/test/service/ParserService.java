@@ -2,6 +2,7 @@ package com.winelab.test.service;
 
 import com.winelab.test.dto.WineDto;
 import com.winelab.test.model.Wine;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 
 
 @Service
+@Slf4j
 public class ParserService {
     private final IWineService wineService;
     private final IDocumentService documentService;
@@ -152,9 +154,18 @@ public class ParserService {
                 arrInfo.add(li.text());
             }
 
-            Element meta = el.select("meta[itemprop=releaseDate]").first();
-            String year = meta.attr("content");
+            Element metaYear = el.select("meta[itemprop=releaseDate]").first();
+            String year = metaYear.attr("content");
             arrInfo.add("Год: " + year);
+
+            try{
+                Element metaRatingValue = el.select("meta[itemprop=ratingValue]").first();
+                String ratingValue = metaRatingValue.attr("content");
+                arrInfo.add("Рейтинг: " + Double.parseDouble(ratingValue)/2.);
+            } catch(Exception ex){
+                log.error("couldn't parse rating by winestyle;");
+            }
+
         }
         return arrInfo;
     }
@@ -236,6 +247,9 @@ public class ParserService {
                 }
                 if(value.contains("Красн")){
                     wineDto.setColor("Красное");
+                }
+                if (value.contains("Рейтинг:")){
+                    wineDto.setRating(value.replaceAll("Рейтинг: ", ""));
                 }
 
             }
