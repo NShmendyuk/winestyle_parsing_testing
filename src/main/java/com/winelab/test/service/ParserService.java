@@ -1,21 +1,21 @@
 package com.winelab.test.service;
 
+import com.winelab.test.controller.exception.ServiceIsBusyException;
 import com.winelab.test.dto.WineDto;
 import com.winelab.test.model.Wine;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 
 @Service
-public class ParserService {
+public class ParserService implements IParserService {
     private final IWineService wineService;
     private final IDocumentService documentService;
+    private Boolean iAmUsed = false;
 
     String mainUrl = "https://spb.winestyle.ru";
     //    String winePages = "/wine/st-petersburg/";
@@ -26,13 +26,27 @@ public class ParserService {
         this.documentService = documentService;
     }
 
-    //TODO: принимать любой относительный путь
-    //public void parseByPages(String relativeUrl)
+    // Запуск парсинга
+    public void startParsingJob(String alcoholType) throws ServiceIsBusyException {
+        if (!this.iAmUsed) {
+            if (alcoholType.equals("wine")) {
+                Thread newThread = new Thread(() -> {
+                    try {
+                        parseByPages(this.winePages);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                });
+                newThread.start();
+            }
+        } else {
+            throw ServiceIsBusyException.createWith("parsing job is already running.");
+        }
+    }
 
     // Пробегаем по страничкам интернет-магазина
-    @Autowired
-    public void parseByPages() throws IOException, InterruptedException {
-        String relativeUrl = this.winePages;
+    private void parseByPages(String relativeUrl) throws InterruptedException {
+        this.iAmUsed = true;
         Document parsePageDoc = documentService.getJsoupDocument(mainUrl + relativeUrl);
 
         Document productDoc;
@@ -51,19 +65,18 @@ public class ParserService {
                             substring(urlToProductPage.
                                     indexOf("<a href=\"") + 9, urlToProductPage.indexOf("\">"));
                     productDoc = documentService.getJsoupDocument(mainUrl + urlToProductPage);
-                    if (wineService.getWineByUrl(urlToProductPage) == null) parsePage(productDoc, urlToProductPage);
-                    else continue; //TODO: or log.info(page existed in database);
-//                  else System.out.println("Exist!!!");
-                    Thread.sleep(2000);
+                    System.out.println(urlToProductPage);
+                    if (wineService.getWineByUrl(urlToProductPage) == null) {
+                        parsePage(productDoc, urlToProductPage);
+                    }
                 }
             } //Переход на страницу продукции
-
-            Thread.sleep(2000);
             parsePageDoc = documentService.getJsoupDocument(mainUrl + relativeUrl + "?page=" + i);
         }
+        this.iAmUsed = false;
     }
 
-    public void parsePage(Document doc, String urlToProductPage) {
+    private void parsePage(Document doc, String urlToProductPage) {
         String price = "noPrice";
         String name = "noName";
         String urlImage = "noUrlImage";

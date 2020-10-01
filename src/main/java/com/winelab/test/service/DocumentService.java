@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class DocumentService implements IDocumentService {
-    public Document getJsoupDocument(String url) {
+    public Document getJsoupDocument(String url) throws InterruptedException {
         Document doc = null;
 
         System.out.println(url);
@@ -23,6 +23,7 @@ public class DocumentService implements IDocumentService {
                 System.out.println("Couldn't get a connection to website!"); //TODO: log.error(no connection)
             } // Берем страничку html
         }
+        Thread.sleep(1000);
         return doc;
     }
 
