@@ -2,6 +2,7 @@ package com.winelab.test.service;
 
 import com.winelab.test.dto.WineDto;
 import com.winelab.test.model.Wine;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 
 
 @Service
+@Slf4j
 public class ParserService {
     private final IWineService wineService;
     private final IDocumentService documentService;
@@ -40,7 +42,6 @@ public class ParserService {
         int pages = documentService.pagesNumber(parsePageDoc);
 
         for (int i = 2; i <= pages; i++) {
-            //TODO: log.info(page);
             Elements wineElements = parsePageDoc.getElementsByClass("item-block-content");
 
             for (Element infoBlock : wineElements) {
@@ -52,8 +53,7 @@ public class ParserService {
                                     indexOf("<a href=\"") + 9, urlToProductPage.indexOf("\">"));
                     productDoc = documentService.getJsoupDocument(mainUrl + urlToProductPage);
                     if (wineService.getWineByUrl(urlToProductPage) == null) parsePage(productDoc, urlToProductPage);
-                    else continue; //TODO: or log.info(page existed in database);
-//                  else System.out.println("Exist!!!");
+                    else continue;
                     Thread.sleep(2000);
                 }
             } //Переход на страницу продукции
@@ -245,7 +245,7 @@ public class ParserService {
                 if (name.contains("\"")) wineDto.setBrand(name.substring(name.indexOf("\"")+1, name.lastIndexOf("\"")));
                 else wineDto.setBrand("noBrand");
             } catch (Exception ex) {
-                System.out.println(name + "  !!!!!!Exception"); //TODO: log.error
+                log.error("coundn't parse brand from name! set \"noBrand\"; name: {}", name);
                 wineDto.setBrand("noBrand");
             }
         }

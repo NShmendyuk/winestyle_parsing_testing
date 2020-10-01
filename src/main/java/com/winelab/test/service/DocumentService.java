@@ -1,16 +1,18 @@
 package com.winelab.test.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class DocumentService implements IDocumentService {
     public Document getJsoupDocument(String url) {
         Document doc = null;
 
-        System.out.println(url);
+        log.info("parsing url: {}", url);
 
         while (doc == null) {
             try {
@@ -20,7 +22,7 @@ public class DocumentService implements IDocumentService {
                         .get(); // Берем страничку html
 
             } catch (Exception ex) {
-                System.out.println("Couldn't get a connection to website!"); //TODO: log.error(no connection)
+                log.error("Couldn't get a connection to website! ", ex);
             } // Берем страничку html
         }
         return doc;

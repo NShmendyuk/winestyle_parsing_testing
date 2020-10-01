@@ -3,11 +3,13 @@ package com.winelab.test.service;
 import com.winelab.test.dto.WineDto;
 import com.winelab.test.model.Wine;
 import com.winelab.test.repository.WineRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@Slf4j
 public class WineService implements IWineService {
 
     WineRepository wineRepository;
@@ -80,8 +82,7 @@ public class WineService implements IWineService {
         try{
             wineRepository.save(wine);
         } catch(Exception ex){
-            System.out.println(wine.toString() +"\n Error:\n"); //TODO: log.error();
-            ex.printStackTrace();
+            log.error("Error on saving wine: {}", wine.toString(), ex);
         }
 
         return wine;

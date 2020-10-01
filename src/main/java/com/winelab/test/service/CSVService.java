@@ -8,11 +8,13 @@ import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import com.winelab.test.model.Wine;
 import com.winelab.test.repository.WineRepository;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 
+@Slf4j
 public class CSVService implements ICSVService {
     public void toCsvFile(WineRepository wineRepository) throws IOException {
         List<Wine> wines = wineRepository.findAll();
@@ -35,7 +37,7 @@ public class CSVService implements ICSVService {
         try {
             winecsv.write(wines);
         } catch (CsvDataTypeMismatchException | CsvRequiredFieldEmptyException e) {
-            e.printStackTrace();
+            log.error("Error while csv writing! ", e);
         }
     }
 }
