@@ -6,6 +6,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -28,6 +29,17 @@ public class ParserService {
 
     //TODO: принимать любой относительный путь
     //public void parseByPages(String relativeUrl)
+
+
+    //At 00:00; every day
+    @Scheduled(cron = "0 0 0 * * *") // second, minute, hour, day of month, month, day(s) of week(0-6)
+    public void onSchedule(){
+        try {
+            parseByPages();
+        } catch (IOException | InterruptedException e) {
+            System.out.println("Error on schedule with parsing pages!");
+        }
+    }
 
     // Пробегаем по страничкам интернет-магазина
     @Autowired
