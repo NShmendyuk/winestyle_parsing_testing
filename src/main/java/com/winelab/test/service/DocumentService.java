@@ -23,7 +23,7 @@ public class DocumentService implements IDocumentService {
                 System.out.println("Couldn't get a connection to website!"); //TODO: log.error(no connection)
             } // Берем страничку html
         }
-        Thread.sleep(1000);
+        Thread.sleep(400);
         return doc;
     }
 
