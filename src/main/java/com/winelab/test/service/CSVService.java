@@ -25,8 +25,9 @@ public class CSVService implements ICSVService {
 
         mapStrategy.setType(Wine.class);
 
-        String[] columns = new String[]{"id", "brand", "color",
-                "grape", "name", "price", "region", "strength", "sugar", "volume"};
+        String[] columns = new String[]{"url", "imageUrl", "name", "year", "brand",
+                "color", "region", "volume", "strength", "sugar", "price",
+                "grape", "tastingNotes", "rating"};
         mapStrategy.setColumnMapping(columns);
 
         StatefulBeanToCsv<Wine> winecsv = new StatefulBeanToCsvBuilder<Wine>(writer)

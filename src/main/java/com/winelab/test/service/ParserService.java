@@ -20,11 +20,11 @@ import java.util.ArrayList;
 public class ParserService implements IParserService {
     private final IWineService wineService;
     private final IDocumentService documentService;
-    private Boolean iAmUsed = false;
+    private volatile Boolean iAmUsed = false; // TODO: проверить
 
     String mainUrl = "https://spb.winestyle.ru";
     //    String winePages = "/wine/st-petersburg/";
-    String winePages = "/wine/wines_ll/";
+    String relativeUrl = "/wine/wines_ll/";
 
     public ParserService(IWineService wineService, IDocumentService documentService) {
         this.wineService = wineService;
@@ -37,9 +37,9 @@ public class ParserService implements IParserService {
             if (alcoholType.equals("wine")) {
                 Thread newThread = new Thread(() -> {
                     try {
-                        parseByPages(this.winePages);
+                        parseByPages(this.mainUrl + this.relativeUrl);
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        log.error("Error on starting thread!", e);
                     }
                 });
                 newThread.start();
@@ -49,14 +49,13 @@ public class ParserService implements IParserService {
         }
     }
 
-
     //At 00:00; every day
     @Scheduled(cron = "0 0 0 * * *") // second, minute, hour, day of month, month, day(s) of week(0-6)
-    public void onSchedule(){
+    public void onScheduleParseWinePages(){
         try {
-            parseByPages();
-        } catch (IOException | InterruptedException e) {
-            System.out.println("Error on schedule with parsing pages!");
+            parseByPages(mainUrl + relativeUrl);
+        } catch (InterruptedException e) {
+            log.error("Error on schedule with parsing wines pages!", e);
         }
     }
 
@@ -70,7 +69,6 @@ public class ParserService implements IParserService {
         int pages = documentService.pagesNumber(parsePageDoc);
 
         for (int i = 2; i <= pages; i++) {
-            //TODO: log.info(page);
             Elements wineElements = parsePageDoc.getElementsByClass("item-block-content");
 
             for (Element infoBlock : wineElements) {
@@ -81,7 +79,7 @@ public class ParserService implements IParserService {
                             substring(urlToProductPage.
                                     indexOf("<a href=\"") + 9, urlToProductPage.indexOf("\">"));
                     productDoc = documentService.getJsoupDocument(mainUrl + urlToProductPage);
-                    log.info("pasring page: ", urlToProductPage);
+                    log.info("parsing page: ", urlToProductPage);
                     if (wineService.getWineByUrl(urlToProductPage) == null){
                         parsePage(productDoc, urlToProductPage);
                     } else {
@@ -143,7 +141,6 @@ public class ParserService implements IParserService {
             price = parsePriceFromMainInfo(mainInfo);
         }
 
-
         createWine(name, price, values, urlToProductPage, urlImage, tastingNotes);
     }
 
@@ -194,6 +191,7 @@ public class ParserService implements IParserService {
 
             Element metaYear = el.select("meta[itemprop=releaseDate]").first();
             String year = metaYear.attr("content");
+            if (year == null) year = "-1";
             arrInfo.add("Год: " + year);
 
             try{
@@ -208,7 +206,7 @@ public class ParserService implements IParserService {
         return arrInfo;
     }
 
-    private String parseTastingInfo(Elements tastingInfo){ //TODO: tasting info
+    private String parseTastingInfo(Elements tastingInfo){
         String colorDescription = "noColorDescription";
         String aromaDescription = "noAromaDescription";
         String tasteDescription = "noTasteDescription";

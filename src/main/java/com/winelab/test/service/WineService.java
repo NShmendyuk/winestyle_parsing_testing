@@ -93,7 +93,7 @@ public class WineService implements IWineService {
         try{
             wineRepository.save(wine);
         } catch(Exception ex){
-            log.error("Error on saving wine: {}", wine.toString(), ex);
+            log.error("Error on saving wine!!!: {}", wine.toString(), ex);
         }
 
         return wine;
