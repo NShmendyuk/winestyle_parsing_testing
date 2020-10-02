@@ -7,13 +7,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.util.ArrayList;
-
 
 @Service
 @Slf4j
@@ -23,8 +20,7 @@ public class ParserService implements IParserService {
     private volatile Boolean iAmUsed = false; // TODO: проверить
 
     String mainUrl = "https://spb.winestyle.ru";
-    //    String winePages = "/wine/st-petersburg/";
-    String relativeUrl = "/wine/wines_ll/";
+    String wineUrl = "/wine/wines_ll/";
 
     public ParserService(IWineService wineService, IDocumentService documentService) {
         this.wineService = wineService;
@@ -37,9 +33,9 @@ public class ParserService implements IParserService {
             if (alcoholType.equals("wine")) {
                 Thread newThread = new Thread(() -> {
                     try {
-                        parseByPages(this.mainUrl + this.relativeUrl);
+                        parseByPages(wineUrl);
                     } catch (InterruptedException e) {
-                        log.error("Error on starting thread!", e);
+                        log.error("Thread is sleeping!", e);
                     }
                 });
                 newThread.start();
@@ -53,7 +49,7 @@ public class ParserService implements IParserService {
     @Scheduled(cron = "0 0 0 * * *") // second, minute, hour, day of month, month, day(s) of week(0-6)
     public void onScheduleParseWinePages(){
         try {
-            parseByPages(mainUrl + relativeUrl);
+            parseByPages(wineUrl);
         } catch (InterruptedException e) {
             log.error("Error on schedule with parsing wines pages!", e);
         }
@@ -79,13 +75,11 @@ public class ParserService implements IParserService {
                             substring(urlToProductPage.
                                     indexOf("<a href=\"") + 9, urlToProductPage.indexOf("\">"));
                     productDoc = documentService.getJsoupDocument(mainUrl + urlToProductPage);
-                    log.info("parsing page: ", urlToProductPage);
                     if (wineService.getWineByUrl(urlToProductPage) == null){
                         parsePage(productDoc, urlToProductPage);
                     } else {
                         parseUpdatePrice(infoBlock, urlToProductPage);
                     }
-
                 }
             } //Переход на страницу продукции
             parsePageDoc = documentService.getJsoupDocument(mainUrl + relativeUrl + "?page=" + i);
@@ -182,26 +176,32 @@ public class ParserService implements IParserService {
 
     private ArrayList<String> parseMainInfo(Elements info){
         ArrayList<String> arrInfo = new ArrayList<>();
-        for (Element el: info){
+        for (Element el : info) {
             Elements liElements = el.getElementsByTag("li");
-            for (Element li: liElements){
+            for (Element li : liElements) {
                 if (li.text().length() == 0) continue;
                 arrInfo.add(li.text());
             }
 
             Element metaYear = el.select("meta[itemprop=releaseDate]").first();
-            String year = metaYear.attr("content");
-            if (year == null) year = "-1";
-            arrInfo.add("Год: " + year);
+            String cropYear;
 
-            try{
-                Element metaRatingValue = el.select("meta[itemprop=ratingValue]").first();
-                String ratingValue = metaRatingValue.attr("content");
-                arrInfo.add("Рейтинг: " + Double.parseDouble(ratingValue)/2.);
-            } catch(Exception ex){
-                log.error("couldn't parse rating by winestyle;");
+            if (metaYear != null) {
+                cropYear = metaYear.attr("content");
+            } else {
+                cropYear = "-1";
+                log.warn("product's crop year is not specified");
             }
 
+            arrInfo.add("Год: " + cropYear);
+
+            try {
+                Element metaRatingValue = el.select("meta[itemprop=ratingValue]").first();
+                String ratingValue = metaRatingValue.attr("content");
+                arrInfo.add("Рейтинг: " + Double.parseDouble(ratingValue) / 2.);
+            } catch (Exception ex) {
+                log.warn("product has no winestyle's rating");
+            }
         }
         return arrInfo;
     }
@@ -295,7 +295,7 @@ public class ParserService implements IParserService {
                 if (name.contains("\"")) wineDto.setBrand(name.substring(name.indexOf("\"")+1, name.lastIndexOf("\"")));
                 else wineDto.setBrand("noBrand");
             } catch (Exception ex) {
-                log.error("coundn't parse brand from name! set \"noBrand\"; name: {}", name);
+                log.warn("coundn't parse brand from name! set \"noBrand\"; name: {}", name);
                 wineDto.setBrand("noBrand");
             }
         }
