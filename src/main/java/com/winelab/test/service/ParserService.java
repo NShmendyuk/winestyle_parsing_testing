@@ -82,15 +82,27 @@ public class ParserService implements IParserService {
                                     indexOf("<a href=\"") + 9, urlToProductPage.indexOf("\">"));
                     productDoc = documentService.getJsoupDocument(mainUrl + urlToProductPage);
                     log.info("pasring page: ", urlToProductPage);
-                    if (wineService.getWineByUrl(urlToProductPage) == null) {
+                    if (wineService.getWineByUrl(urlToProductPage) == null){
                         parsePage(productDoc, urlToProductPage);
+                    } else {
+                        parseUpdatePrice(infoBlock, urlToProductPage);
                     }
+
                 }
             } //Переход на страницу продукции
             parsePageDoc = documentService.getJsoupDocument(mainUrl + relativeUrl + "?page=" + i);
         }
     }
 
+    //обновление позиции
+    private void parseUpdatePrice(Element infoBlock, String url){
+        Elements elems = infoBlock.getElementsByClass("price");
+        String priceForUpdate = elems.text();
+        priceForUpdate = priceForUpdate.replaceAll("руб\\.", "").replaceAll(" ", "");
+        wineService.updatePrice(priceForUpdate, url);
+    }
+
+    // основной парсинг
     private void parsePage(Document doc, String urlToProductPage) {
         String price = "noPrice";
         String name = "noName";
