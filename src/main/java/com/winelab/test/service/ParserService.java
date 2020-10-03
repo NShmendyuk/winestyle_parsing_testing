@@ -48,10 +48,12 @@ public class ParserService implements IParserService {
     //At 00:00; every day
     @Scheduled(cron = "0 0 0 * * *") // second, minute, hour, day of month, month, day(s) of week(0-6)
     public void onScheduleParseWinePages(){
-        try {
+        if (!iAmUsed){
+            try {
             parseByPages(wineUrl);
-        } catch (InterruptedException e) {
-            log.error("Error on schedule with parsing wines pages!", e);
+            } catch (InterruptedException e) {
+                log.error("Error on schedule with parsing wines pages!", e);
+            }
         }
     }
 
